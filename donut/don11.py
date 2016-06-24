@@ -246,6 +246,7 @@ class Donut():
         py.imshow(image,
                   origin='lower',
                   interpolation='nearest')
+        py.show();
 
     def find(self,impix,zres,nzer):
         '''
@@ -345,10 +346,11 @@ class Donut():
 
             d1 = np.min(dif)
             d2 = np.max(dif)
-            #display the image (left: input, right: model)
-            # self.displ(np.append(impix,model,axis=-1))
 
-        # log.info('Fitting done!')
+
+        log.info('Fitting done!')
+        #display the image (left: input, right: model)
+        self.displ(np.append ( np.append(impix,model, axis=-1), (impix-model), axis=-1))
         return chi2, model, z0
 
     #-------------------------------------------------------

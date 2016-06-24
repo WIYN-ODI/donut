@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 
 import os,sys
+sys.path.append ("../")
 import numpy as np
 import pylab as py
+import matplotlib.pyplot as plt
+
 from donut.don11 import Donut
 from astropy.io import fits
 from astropy.table import Table
@@ -31,17 +34,8 @@ def main(argv):
     parser.add_option('-i','--image',
                       help = 'Fit image file with donuts to measure.'
                       ,type='string')
-    parser.add_option('-c','--catalog',
-                      help = 'Sextractor catalog with sources position.'
-                      ,type='string')
-    parser.add_option('--start',
-                      help = 'Initial index of the catalog to process (default = 0).'
-                      ,type='int',default=0)
-    parser.add_option('--end',
-                      help = 'Last index of the catalog to process (default = -1).'
-                      ,type='int',default=-1)
     parser.add_option('-p','--parameters',
-                      help = 'Base donut json parameters. Position will be overwritten.'
+                      help = 'Base donut_odi json parameters. Position will be overwritten.'
                       ,type='string')
     parser.add_option('-o','--output',
                       help = 'Output file name.'
@@ -49,22 +43,24 @@ def main(argv):
 
     opt, args = parser.parse_args(argv)
 
-    # Read sextractor catalog
-    cat = Table.read(opt.catalog,
-                     format='ascii.sextractor')[opt.start:opt.end]
-
-    # Read basic parameters
+    # Read basic parameters from JSON config file
     with open(opt.parameters) as par_file:
         donutpars = json.load(par_file)
 
-    # Write donut parameter catalog
+    # Read image. ODI specific: pad the surounding of the image.
+    img = fits.getdata(opt.image)
+    xce = img.shape[0] / 2 + 512/4
+    yce = img.shape[1] / 2 + 512/4
+    _img = np.zeros ((512,512))
+    _img [512/4:512/4+img.shape[0],512/4:512/4+img.shape[1]] = img
+    img = _img
+
+    # Write donut_odi parameter catalog
     basepar = donutpars['donpar'][0]
     parcatalog = {'donpar':[]}
-
-    for src in cat:
-        basepar['XC'] = int(src['X_IMAGE'])
-        basepar['YC'] = int(src['Y_IMAGE'])
-        parcatalog['donpar'].append(dict(basepar))
+    basepar['XC'] = int(xce)
+    basepar['YC'] = int(yce)
+    parcatalog['donpar'].append(dict(basepar))
 
     tmpCat = NamedTemporaryFile(delete=False)
     log.info('Donut catalog file: %s'%tmpCat.name)
@@ -72,8 +68,6 @@ def main(argv):
     with open(tmpCat.name,'w') as fp:
         json.dump(parcatalog,fp)
 
-    # Read image
-    img = fits.getdata(opt.image)
 
     def donutfit(index):
         don = Donut()
@@ -103,37 +97,14 @@ def main(argv):
             zres[0] = 0 # False
             pass
 
+        don.savez(zres, opt.output)
         return zres
 
-    joblist = []
+    zres = donutfit (0)
+    print zres
 
-    if comm.rank == 0:
-
-        nprocs = comm.size
-        njobs_perproc =  len(cat)/nprocs
-        joblist = np.arange(njobs_perproc*nprocs).reshape(nprocs,njobs_perproc)
-
-    proclist = comm.scatter(joblist,root)
-
-    # procres = np.zeros(len(proclist))
-    # Store the results
-    procres = np.zeros((len(proclist),basepar['NZER']+3))
-
-    fitted = np.zeros(len(cat)) == 0
-
-    for i,p in enumerate(proclist):
-        procres[i] = donutfit(p)
-
-    recvbuf=comm.gather(procres,root)
-    if comm.rank==0:
-        log.info('Writing output to %s '%opt.output)
-        zres = np.array(recvbuf)
-        # mask = recvbuf[:,:1].T[0] == 1
-        # zres = recvbuf[:,1:]
-        np.save(opt.output,zres)
-
-    # for i in range(len(cat)):
-    #     log.info('Working on %4i/%4i'%(i+1,len(cat)))
+    # for i in range(len(parcatalog)):
+    #     log.info('Working on %4i/%4i'%(i+1,len(parcatalog)))
     #     print 'Working on %4i/%4i'%(i+1,len(cat))
     #     donutfit(i)
     # # exclude non-fitted sources
