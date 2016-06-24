@@ -1,0 +1,21 @@
+{
+  "donpar":[
+      {"D": 3.49885 ,
+       "EPS": 0.413 ,
+       "ALAMBDA": 0.600000 ,
+       "PIXEL": 0.110000 ,
+       "NGRID": 300 ,
+       "RON": 10.0000 ,
+       "EADU": 1.30000 ,
+       "THRESH": 0.0500000 ,
+       "NZER": 21 ,
+       "DATADIR": "./"  ,
+       "STATIC": ""  ,
+       "RESULT": "donut.dat" ,
+       "PARFILE": "donut.par" ,
+       "IMFILE": "focus.fits" ,
+       "XC": 112 ,
+       "YC": 112 ,
+       "EFOC": 1}
+    ]
+}
