@@ -38,6 +38,13 @@ def main(argv):
     parser.add_option('-o','--output',
                       help = 'Output file name.'
                       ,type='string')
+    parser.add_option('--intra', action="store_true",
+                      help = 'Set image as intra-focal.',
+                      dest="intraFocal", default=True)
+
+    parser.add_option('--extra', action="store_false",
+                  help = 'Set image as extra-focal.',
+                  dest="intraFocal")
 
     opt, args = parser.parse_args(argv)
 
@@ -45,7 +52,10 @@ def main(argv):
     with open(opt.parameters) as par_file:
         donutpars = json.load(par_file)
 
+
+
     # Read image. ODI specific: pad the surounding of the image.
+    # There is something odd here in the dimension. That needs follow-up.
     img = fits.getdata(opt.image)
     xce = img.shape[0] / 2 + 512/4
     yce = img.shape[1] / 2 + 512/4
@@ -58,6 +68,12 @@ def main(argv):
     parcatalog = {'donpar':[]}
     basepar['XC'] = int(xce)
     basepar['YC'] = int(yce)
+    if (opt.intraFocal):
+        basepar['EFOC'] = 1
+    else:
+        basepar['EFOC'] = -1
+
+
     parcatalog['donpar'].append(dict(basepar))
 
     tmpCat = NamedTemporaryFile(delete=False)
@@ -91,22 +107,22 @@ def main(argv):
             zres[0] = 0 # False
             pass
 
-        don.printz(zres)
+        outtxt = "%s.txt" % opt.output
+        outpng = "%s.png" % opt.output
+
+        don.printz(zres, outtxt)
+        Donut.displ(np.append ( np.append(piximg.T,immod, axis=-1), (piximg.T-immod), axis=-1), outpng)
         return zres
 
     zres = donutfit (0)
 
-    # for i in range(len(parcatalog)):
-    #     log.info('Working on %4i/%4i'%(i+1,len(parcatalog)))
-    #     print 'Working on %4i/%4i'%(i+1,len(cat))
-    #     donutfit(i)
-    # # exclude non-fitted sources
+
     sendbuf=""
     if MPI.COMM_WORLD.rank==0:
         sendbuf="done"
     recvbuf=MPI.COMM_WORLD.bcast(sendbuf,root)
     log.info(recvbuf)
-    # print tmpCat.name
+
 
 if __name__ == '__main__':
     main(sys.argv)

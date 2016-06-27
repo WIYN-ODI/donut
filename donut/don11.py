@@ -6,6 +6,8 @@ import pylab as py
 import json
 import ztools
 import logging
+import sys
+import math
 
 log = logging.getLogger(__name__)
 
@@ -245,11 +247,22 @@ class Donut():
         print zestim
         return zestim
 
-    def displ(self,image):
+    @staticmethod
+    def displ(image, output=None):
+        fig = py.figure(frameon=False)
+        fig.set_size_inches(6.5,2.5)
+        ax = py.Axes(fig, [0., 0., 1., 1.])
+        #ax.set_axis_off()
+        fig.add_axes(ax)
         py.imshow(image,
                   origin='lower',
                   interpolation='nearest')
-        py.show();
+
+        if output == None:
+            py.show(block=True)
+        else:
+            py.savefig(output, dpi=100)
+
 
     def find(self,impix,zres,nzer):
         '''
@@ -289,6 +302,7 @@ class Donut():
         invmat = np.zeros((n,nzer)).T
         for k in range(ncycle):
             model = self.getimage(z0)
+            #Donut.displ(np.append ( np.append(impix,model, axis=-1), (impix-model), axis=-1))
             # print 'MODEL:',model.shape
             im0 = model[indonut]
             chi2 = np.sqrt(np.sum((im0 - im)**2.)/chi2norm )
@@ -351,10 +365,12 @@ class Donut():
             d2 = np.max(dif)
 
 
+
         log.info('Fitting done!')
         #display the image (left: input, right: model)
+        output = None
 
-        self.displ(np.append ( np.append(impix,model, axis=-1), (impix-model), axis=-1))
+        #self.displ(np.append ( np.append(impix,model, axis=-1), (impix-model), axis=-1))
         return chi2, model, z0
 
     #-------------------------------------------------------
@@ -381,6 +397,7 @@ class Donut():
             z0[3:6] *= -1
         self.zres = z0
 
+
         impixnorm = impix/np.sum(impix)
         impixmax = np.max(impix)
 
@@ -392,7 +409,7 @@ class Donut():
 
         chi2, immod, zernik = self.find(impix, self.zres, nzer)
         return chi2,immod,zernik
-        # z0 = z = [0.724 , -2.606 , -3.640 ,  1.906 , -0.058 ,  0.243 ,  0.315 , -0.185 , -0.163 ,  0.001  ,-0.125 , -0.095 , -0.061 , -0.020 , -0.029 ,  0.184 , -0.084 , -0.009  , 0.079 , -0.001 , -0.015]
+
         import scipy.optimize as optimization
 
         def chi2(z,im):
@@ -434,7 +451,7 @@ class Donut():
 
         # log.info('Zernike vector is saved in %s'%filename)
 
-    def printz (self, X):
+    def printz (self, X, output=None):
         Description = ["Seeing ['']   ",
                        "xTilt     Z  2",
                        "yTilt     Z  3",
@@ -446,9 +463,18 @@ class Donut():
                        "Y Trefoil Z  9",
                        "X Trefoil Z 10",
                        "Spherical Z 11"]
-        print ("Zernike          rms um")
+
+        rmstopeak = [1,2,2,math.sqrt(3), math.sqrt (6), math.sqrt (6), math.sqrt (8), math.sqrt (8), math.sqrt (5),
+                     math.sqrt (8), math.sqrt (8), math.sqrt (10)]
+
+        if (output == None):
+            myout = sys.stdout
+        else:
+            myout = file (output, "w+")
+
+        myout.write ("Zernike           rms um     PV um\n")
         for idx in range (0, min (len (Description),len(X))):
-            print "%s : %6.3f" % (Description[idx],X[idx])
+            myout.write ( "%s : % 7.3f   % 7.3f\n" % (Description[idx],X[idx], X[idx] * rmstopeak[idx]))
 
 
     def readz(self):
