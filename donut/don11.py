@@ -1,4 +1,6 @@
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import numpy as np
 import pylab as py
 import json
@@ -15,8 +17,8 @@ Translation to python Jun, 2015
 
 class Donut():
 
-    seeingMin = 0.2
-    seeingMax = 6.0
+    seeingMin = 0.3
+    seeingMax = 3.0
 
     #def __init__(self):
     #    pass
@@ -239,7 +241,8 @@ class Donut():
         a6 = scale*(mxx - myy)*0.5*(mxx*myy)**(-0.25)/1.45
         zestim = np.array([0.,a2,a3,a4,a5,a6])*self.alambda/(2.*np.pi) # estimated Zernike aberrations
         zestim[0] = 0.5
-
+        print "Estiamted Zernikes from moment:"
+        print zestim
         return zestim
 
     def displ(self,image):
@@ -350,6 +353,7 @@ class Donut():
 
         log.info('Fitting done!')
         #display the image (left: input, right: model)
+
         self.displ(np.append ( np.append(impix,model, axis=-1), (impix-model), axis=-1))
         return chi2, model, z0
 
@@ -427,7 +431,24 @@ class Donut():
         '''
 
         np.savetxt(filename,fmt='%8.3f',X=z)
+
         # log.info('Zernike vector is saved in %s'%filename)
+
+    def printz (self, X):
+        Description = ["Seeing ['']   ",
+                       "xTilt     Z  2",
+                       "yTilt     Z  3",
+                       "Focus     Z  4",
+                       "Y Astig   Z  5",
+                       "X Astig   Z  6",
+                       "Y Coma    Z  7",
+                       "X Coma    Z  8",
+                       "Y Trefoil Z  9",
+                       "X Trefoil Z 10",
+                       "Spherical Z 11"]
+        print ("Zernike          rms um")
+        for idx in range (0, min (len (Description),len(X))):
+            print "%s : %6.3f" % (Description[idx],X[idx])
 
 
     def readz(self):
@@ -441,7 +462,7 @@ class Donut():
 
         with open(resfile) as fp:
             fmt_str = '%20s %6i %6i %10.3e %8.4f'+len(z)*' %8.3f'
-            tuple_res = tuple(imfile, self.xc, self.yc, flux, chi2)+tuple(z)
+            tuple_res = tuple(imfile, self.xc, self.yc, self.flux, chi2)+tuple(z)
             fp.write(fmt_str%tuple_res)
 
         fp.close()

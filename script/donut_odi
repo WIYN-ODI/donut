@@ -2,13 +2,11 @@
 
 import os,sys
 sys.path.append ("../")
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import numpy as np
-import pylab as py
-import matplotlib.pyplot as plt
-
 from donut.don11 import Donut
 from astropy.io import fits
-from astropy.table import Table
 import json
 import logging
 from tempfile import NamedTemporaryFile
@@ -81,11 +79,7 @@ def main(argv):
         try:
             if piximg.shape == (don.ngrid/2,don.ngrid/2):
                 x2,immod,zer = don.fit(piximg.T)
-
-                zres[0] = 1 # True
-                zres[1] = don.xc
-                zres[2] = don.yc
-                zres[3:] = zer
+                zres = zer
             else:
                 log.warning('Source %i to close to the border. Skipping...'%(index))
                 zres[0] = 0 # False
@@ -97,11 +91,10 @@ def main(argv):
             zres[0] = 0 # False
             pass
 
-        don.savez(zres, opt.output)
+        don.printz(zres)
         return zres
 
     zres = donutfit (0)
-    print zres
 
     # for i in range(len(parcatalog)):
     #     log.info('Working on %4i/%4i'%(i+1,len(parcatalog)))
