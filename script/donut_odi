@@ -10,11 +10,9 @@ from astropy.io import fits
 import json
 import logging
 from tempfile import NamedTemporaryFile
-from mpi4py import MPI
 
-comm = MPI.COMM_WORLD
+
 root=0
-rs_string ='[rank:%03i/%03i]'%(comm.rank,comm.size)
 
 logging.basicConfig(format='%(asctime)s[%(levelname)s:%(threadName)s]-%(name)s-(%(filename)s:%(lineno)d):: %(message)s',
                     level=logging.DEBUG,
@@ -117,11 +115,6 @@ def main(argv):
     zres = donutfit (0)
 
 
-    sendbuf=""
-    if MPI.COMM_WORLD.rank==0:
-        sendbuf="done"
-    recvbuf=MPI.COMM_WORLD.bcast(sendbuf,root)
-    log.info(recvbuf)
 
 
 if __name__ == '__main__':
