@@ -2,7 +2,6 @@
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 import numpy as np
-import pylab as py
 import json
 import ztools
 import logging
@@ -10,6 +9,12 @@ import sys
 import math
 
 log = logging.getLogger(__name__)
+
+try:
+    import pylab as py
+except:
+    py = None
+    log.warning('No plotting...')
 
 '''
 Measuring low-order aberrations from defocused images
@@ -208,7 +213,7 @@ class Donut():
         :param impix1:
         :return: Vector of Zernike aberrations in microns
         '''
-        n = self.ngrid/self.npixperpix
+        n = int(self.ngrid/self.npixperpix)
 
         xx = np.array([np.arange(n*2)-n]*(2*n))   #replicate(1,2*n)
         yy = np.array([np.arange(n*2)-n]*(2*n)).T #replicate(1,2*n)
@@ -500,10 +505,10 @@ class Donut():
         yc = self.yc
         nccd = self.fovpix
 
-        ix1 = np.max([xc-nccd,0])
-        ix2 = np.min([xc+nccd, len(img)-1])
-        iy1 = np.max([yc-nccd,0])
-        iy2 = np.min([yc+nccd, len(img)-1])
+        ix1 = int(np.max([xc-nccd,0]))
+        ix2 = int(np.min([xc+nccd, len(img)-1]))
+        iy1 = int(np.max([yc-nccd,0]))
+        iy2 = int(np.min([yc+nccd, len(img)-1]))
 
         img1 = img[ix1:ix2,iy1:iy2] # cut out the required part
 
@@ -527,11 +532,11 @@ class Donut():
         ix = np.array(np.floor(ix),dtype=np.int)+ nx/2
         iy = np.array(np.floor(iy),dtype=np.int)+ ny/2
 
-        ix1 = np.max([ix-nccd/2 ,0])
-        ix2 = np.min([ix1+nccd, nx])
+        ix1 = int(np.max([ix-nccd/2 ,0]))
+        ix2 = int(np.min([ix1+nccd, nx]))
 
-        iy1 = np.max([iy-nccd/2 ,0])
-        iy2 = np.min([iy1+nccd , ny])
+        iy1 = int(np.max([iy-nccd/2 ,0]))
+        iy2 = int(np.min([iy1+nccd , ny]))
 
         if (ix2-ix1 < nccd-1) or (iy2-iy1 < nccd-1):
             log.error('Image is cut on one side!')
