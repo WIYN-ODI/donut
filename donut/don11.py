@@ -25,7 +25,7 @@ Translation to python Jun, 2015
 class Donut():
 
     seeingMin = 0.3
-    seeingMax = 3.0
+    seeingMax = 5.0
 
     #def __init__(self):
     #    pass
@@ -266,7 +266,7 @@ class Donut():
         if output == None:
             py.show(block=True)
         else:
-            py.savefig(output, dpi=100)
+            py.savefig(output, dpi=300, bbox_inches="tight")
 
 
     def find(self,impix,zres,nzer):
