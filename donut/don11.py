@@ -247,7 +247,7 @@ class Donut():
         a5 = scale*mxy*(mxx*myy)**(-0.25)/1.45
         a6 = scale*(mxx - myy)*0.5*(mxx*myy)**(-0.25)/1.45
         zestim = np.array([0.,a2,a3,a4,a5,a6])*self.alambda/(2.*np.pi) # estimated Zernike aberrations
-        zestim[0] = 0.5
+        zestim[0] = 2 
         print "Estiamted Zernikes from moment:"
         print zestim
         return zestim

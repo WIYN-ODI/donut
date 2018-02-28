@@ -31,6 +31,16 @@ def main(argv):
     parser.add_option('-i','--image',
                       help = 'Fit image file with donuts to measure.'
                       ,type='string')
+    parser.add_option('-x','--x',
+                      help = 'x position of donut'
+                      ,type='int')
+    parser.add_option('-y','--y',
+                      help = 'y position of donut'
+                      ,type='int')
+    parser.add_option('-w','--w',
+                      help = 'width of donut'
+                      ,type='int')
+
     parser.add_option('-p','--parameters',
                       help = 'Base donut_odi json parameters. Position will be overwritten.'
                       ,type='string')
@@ -56,6 +66,11 @@ def main(argv):
     # Read image. ODI specific: pad the surounding of the image.
     # There is something odd here in the dimension. That needs follow-up.
     img = fits.getdata(opt.image)
+    sky = np.median (img)
+    print ("Sky value is: %8.1f" % sky)
+    w2 = int(opt.w / 2)
+    img = img [ opt.y-w2:opt.y+w2, opt.x-w2: opt.x+w2] - sky
+    
     xce = img.shape[0] / 2 + 512/4
     yce = img.shape[1] / 2 + 512/4
     _img = np.zeros ((512,512))
